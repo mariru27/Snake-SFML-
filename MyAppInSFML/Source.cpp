@@ -17,8 +17,6 @@ enum Direction
     right = 4
 };
 
-
-
 class Fruit
 {
     int x, y;
@@ -110,9 +108,10 @@ public:
     }
 };
 
-
 class Snake
 {
+    int lastX;
+    int lastY;
 public:
     sf::Texture textureForSnake;
     sf::Sprite spriteForSnake;
@@ -126,6 +125,8 @@ public:
         sf::Sprite sprite;
         sprite.setTexture(textureForSnake);
         snake.emplace_back(220, 200);
+        lastX = 220;
+        lastY = 200;
     }
     int getSnakeHeadX()
     {
@@ -139,113 +140,68 @@ public:
     {
         return spriteForSnake;
     }
-    void down()
+    void move(Direction direction)
     {
-        for (auto it = snake.begin(); it != snake.end(); ++it)
+        lastX = snake.back().x;
+        lastY = snake.back().y;
+        switch (direction)
         {
-            
-            it->y = it->y + 20;
-            if (it->y > 400)
+            //up
+        case 1:
+            snake.emplace_front(snake.front().x, snake.front().y - 20);
+            if (snake.front().y < 0)
             {
-                it->y = 0;
+                snake.front().y = 400;
             }
-        }
-    }
-    void up()
-    {
-        for (auto it = snake.begin(); it != snake.end(); ++it)
-        {
-            it->y = it->y - 20;
-            if (it->y < 0)
-            {
-                it->y = 400;
-            }
-        }
-    }
-    void left()
-    {
-        for (auto it = snake.begin(); it != snake.end(); ++it)
-        {
-            it->x = it->x - 20;
-            if (it->x < 0)
-            {
-                it->x = 500;
-            }
-        }
-    }
-    void right()
-    {
-        for (auto it = snake.begin(); it != snake.end(); ++it)
-        {
-            it->x = it->x + 20;
-            if (it->x > 500)
-            {
-                it->x = 0;
-            }
-        }
-    }
+            snake.pop_back();
 
+            break;
+            //down
+        case 2:
+            snake.emplace_front(snake.front().x, snake.front().y + 20);
+            if (snake.front().y > 400)
+            {
+                snake.front().y = 0;
+            }
+            snake.pop_back();
+            break;
+        case 3:
+            //left
+            snake.emplace_front(snake.front().x - 20, snake.front().y);
+            if (snake.front().x < 0)
+            {
+                snake.front().x = 500;
+            }
+            snake.pop_back();
+            break;
+            //right
+        case 4:
+            snake.emplace_front(snake.front().x + 20, snake.front().y);
+            if (snake.front().x > 500)
+            {
+                snake.front().x = 0;
+            }
+            snake.pop_back();
+
+            break;
+        default:
+            break;
+        }
+    }
     void  display()
     {
         std::cout << "fruit\n";
     }
+
     bool eatFruit(Fruit fruit, Direction direction)
     {
-        
-        switch (direction)
+        if (snake[0].x == fruit.getX() && snake[0].y == fruit.getY())
         {
-            //up
-        case 1: 
-        {
-            if (snake[0].x == fruit.getX() && (snake[0].y + 20) == fruit.getY())
-            {
-                snake.emplace_front(fruit.getX(), fruit.getY());
-                //snake.emplace_back(fruit.getX(), snake[0].y - (20*snake.size()));
-                display();
-                return true;
-            }
-        }
-            //down
-        case 2:
-        {
-            if (snake[0].x == fruit.getX() && (snake[0].y - 20) == fruit.getY())
-            {
-                display();
-                //snake.emplace_back(fruit.getX(), snake[0].y + (20 * snake.size()));
-                snake.emplace_front(fruit.getX(), fruit.getY());
-                return true;
-            }
-        }
-            //left
-        case 3:
-        {
-            
-            if ((snake[0].x - 20) == fruit.getX() && snake[0].y == fruit.getY())
-            {
-                display();
-                //snake.emplace_back(snake[0].x + (20 * snake.size()), fruit.getY());
-                snake.emplace_front(fruit.getX(), fruit.getY());
-                return true;
-            }
-        }
-            //right
-        case 4:
-        {
-            if ((snake[0].x + 20) == fruit.getX() && snake[0].y == fruit.getY())
-            {
-                display();
-                //snake.emplace_back(snake[0].x + (20 * snake.size()), fruit.getY());
-                snake.emplace_front(fruit.getX(), fruit.getY());
-                return true;
-            }
-        }
-        default:
-            break;
+            snake.emplace_back(lastX, lastY);
+            return true;
         }
         return false;
     }
-
-
 };
 
 class SnakeBoard
@@ -344,7 +300,6 @@ public:
             for (auto it = snakeObj.snake.begin(); it != snakeObj.snake.end(); ++it)
             {
                 it->sprite.setPosition(it->x, it->y);
-
                 window.draw(it->sprite);
             }
             
@@ -354,7 +309,7 @@ public:
             window.display();
 
             int k = 0;
-            while (time.asSeconds() < 0.3)
+            while (time.asSeconds() < 0.1)
             {
                 if (k == 10000)
                     k = 0;
@@ -401,8 +356,8 @@ public:
                                 snakeMoves = event;
                                 break;
                             }
-                            snakeObj.right();
-
+                            //snakeObj.right();
+                            snakeObj.move(right);
                             displaySnake();
                         }
                         continue;
@@ -426,7 +381,8 @@ public:
                                 snakeMoves = event;
                                 break;
                             }
-                            snakeObj.left();
+                            /*snakeObj.left();*/
+                            snakeObj.move(left);
 
                             displaySnake();
                         }
@@ -449,7 +405,8 @@ public:
                                 snakeMoves = event;
                                 break;
                             }
-                            snakeObj.up();
+                            //snakeObj.up();
+                            snakeObj.move(up);
                             displaySnake();
                         }
                         continue;
@@ -473,8 +430,8 @@ public:
                                 snakeMoves = event;
                                 break;
                             }
-                            snakeObj.down();
-
+                            //snakeObj.down();
+                            snakeObj.move(down);
                             displaySnake();
 
                         }
@@ -503,7 +460,7 @@ protected:
     sf::RenderWindow window;
     sf::Font arialFont;
     sf::Text text;
-    std::vector<Position> snake;
+    std::deque<Position> snake;
 
 public:
     Test()
@@ -532,9 +489,9 @@ public:
 
         startButton.setTexture(textureStartButton);
          
-        snake.emplace_back(10, 10   );
-        auto i = snake.begin();
-        i->sprite.setPosition(10, 10);
+        //snake.emplace_back(Position(10,10));
+        //snake.emplace_back(10, 10);
+        snake.emplace_front(10, 10);
         while (window.isOpen())
         {
 
@@ -542,7 +499,7 @@ public:
             window.draw(sprite);
             startButton.setPosition(140, 120);
             window.draw(startButton);
-            window.draw(i->sprite);
+            window.draw(snake.front().sprite);
             window.display();
             sf::Event event;
 
