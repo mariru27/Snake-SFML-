@@ -4,7 +4,10 @@
 #include<iostream>
 #include<stack>
 #include<vector>
+#include<deque>
 #include <stdlib.h>
+#include<memory>
+
 
 enum Direction
 {
@@ -13,6 +16,8 @@ enum Direction
     left = 3,
     right = 4
 };
+
+
 
 class Fruit
 {
@@ -111,7 +116,7 @@ class Snake
 public:
     sf::Texture textureForSnake;
     sf::Sprite spriteForSnake;
-    std::vector<Position> snake;
+    std::deque<Position> snake;
     Snake()
     {
         if (!textureForSnake.loadFromFile("snake.png", sf::IntRect(0.5, 0.5, 20, 20)))
@@ -124,11 +129,11 @@ public:
     }
     int getSnakeHeadX()
     {
-        return snake[0].x;
+        return snake.front().x;
     }
     int getSnakeHeadY()
     {
-        return snake[0].y;
+        return snake.front().y;
     }
     sf::Sprite getSnakeSprite()
     {
@@ -136,8 +141,9 @@ public:
     }
     void down()
     {
-        for (auto it = snake.begin(); it != snake.end() ; ++it)
+        for (auto it = snake.begin(); it != snake.end(); ++it)
         {
+            
             it->y = it->y + 20;
             if (it->y > 400)
             {
@@ -193,7 +199,8 @@ public:
         {
             if (snake[0].x == fruit.getX() && (snake[0].y + 20) == fruit.getY())
             {
-                snake.emplace_back(fruit.getX(), snake[0].y - (20*snake.size()));
+                snake.emplace_front(fruit.getX(), fruit.getY());
+                //snake.emplace_back(fruit.getX(), snake[0].y - (20*snake.size()));
                 display();
                 return true;
             }
@@ -204,7 +211,8 @@ public:
             if (snake[0].x == fruit.getX() && (snake[0].y - 20) == fruit.getY())
             {
                 display();
-                snake.emplace_back(fruit.getX(), snake[0].y + (20 * snake.size()));
+                //snake.emplace_back(fruit.getX(), snake[0].y + (20 * snake.size()));
+                snake.emplace_front(fruit.getX(), fruit.getY());
                 return true;
             }
         }
@@ -215,7 +223,8 @@ public:
             if ((snake[0].x - 20) == fruit.getX() && snake[0].y == fruit.getY())
             {
                 display();
-                snake.emplace_back(snake[0].x + (20 * snake.size()), fruit.getY());
+                //snake.emplace_back(snake[0].x + (20 * snake.size()), fruit.getY());
+                snake.emplace_front(fruit.getX(), fruit.getY());
                 return true;
             }
         }
@@ -225,7 +234,8 @@ public:
             if ((snake[0].x + 20) == fruit.getX() && snake[0].y == fruit.getY())
             {
                 display();
-                snake.emplace_back(snake[0].x + (20 * snake.size()), fruit.getY());
+                //snake.emplace_back(snake[0].x + (20 * snake.size()), fruit.getY());
+                snake.emplace_front(fruit.getX(), fruit.getY());
                 return true;
             }
         }
@@ -250,6 +260,9 @@ protected:
     sf::Event event;
     Direction direction;
 
+    sf::Texture textureGameOver;
+    sf::Sprite spriteGameOver;
+
     Snake snakeObj;
     Fruit fruit;
 public:
@@ -264,6 +277,7 @@ public:
             std::cout << "font can't load";
         }
         sprite.setTexture(texture);
+        direction = up;
     }
     bool startGame()
     {
@@ -323,7 +337,6 @@ public:
             window.draw(sprite);
             if (snakeObj.eatFruit(fruit, direction) == true)
             {
-                //snakeObj.eatFruit(fruit, direction);
                 fruit.getRandomX();
                 fruit.getRandomY();
                 break;
@@ -331,13 +344,10 @@ public:
             for (auto it = snakeObj.snake.begin(); it != snakeObj.snake.end(); ++it)
             {
                 it->sprite.setPosition(it->x, it->y);
-                //std::cout << it->x << std::endl;
-                //std::cout << it->y << std::endl;
+
                 window.draw(it->sprite);
             }
             
-            //std::cout << "-----------------\n";
-
 
             fruit.sprite.setPosition(fruit.getX(), fruit.getY());
             window.draw(fruit.sprite);
@@ -355,101 +365,133 @@ public:
         }
     }
 
+    void gameOver()
+    {
+
+        if (!texture.loadFromFile("gameover.png" , sf::IntRect(0,0,200,200)))
+        {
+            std::cout << "can not load gameover.png";
+        }
+        spriteGameOver.setTexture(textureGameOver);
+    }
+
     void play()
     {
         while (window.isOpen())
         {
             while (window.pollEvent(snakeMoves))
             {
+
                 switch (snakeMoves.key.code)
                 {
                 //right
                 case sf::Keyboard::Right:
-                {   
-                    direction = right;
-                    while (snakeMoves.key.code == sf::Keyboard::Right)
+                {
+                    if (direction != left)
                     {
-
-                        window.pollEvent(event);
-                        if (event.key.code == sf::Keyboard::Left ||
-                            event.key.code == sf::Keyboard::Down ||
-                            event.key.code == sf::Keyboard::Up)
+                        direction = right;
+                        while (snakeMoves.key.code == sf::Keyboard::Right)
                         {
-                            snakeMoves = event;
-                            break;
-                        }
-                        snakeObj.right();
 
-                        displaySnake();
+                            window.pollEvent(event);
+                            if (event.key.code == sf::Keyboard::Left ||
+                                event.key.code == sf::Keyboard::Down ||
+                                event.key.code == sf::Keyboard::Up)
+                            {
+                                snakeMoves = event;
+                                break;
+                            }
+                            snakeObj.right();
+
+                            displaySnake();
+                        }
+                        continue;
                     }
 
                 }
                 //left
                 case sf::Keyboard::Left:
                 {
-                    direction = left;
-                    while (snakeMoves.key.code == sf::Keyboard::Left)
+                    if (direction != right)
                     {
-
-                        window.pollEvent(event);
-                        if (event.key.code == sf::Keyboard::Right ||
-                            event.key.code == sf::Keyboard::Down ||
-                            event.key.code == sf::Keyboard::Up)
+                        direction = left;
+                        while (snakeMoves.key.code == sf::Keyboard::Left)
                         {
-                            snakeMoves = event;
-                            break;
-                        }
-                        snakeObj.left();
 
-                        displaySnake();
+                            window.pollEvent(event);
+                            if (event.key.code == sf::Keyboard::Right ||
+                                event.key.code == sf::Keyboard::Down ||
+                                event.key.code == sf::Keyboard::Up)
+                            {
+                                snakeMoves = event;
+                                break;
+                            }
+                            snakeObj.left();
+
+                            displaySnake();
+                        }
+                        continue;
                     }
                 }
                 //up
                 case sf::Keyboard::Up:
                 {
-                    direction = up;
-                    while (snakeMoves.key.code == sf::Keyboard::Up)
+                    if (direction != down)
                     {
-                        window.pollEvent(event);
-                        if (event.key.code == sf::Keyboard::Left ||
-                            event.key.code == sf::Keyboard::Down ||
-                            event.key.code == sf::Keyboard::Right)
+                        direction = up;
+                        while (snakeMoves.key.code == sf::Keyboard::Up)
                         {
-                            snakeMoves = event;
-                            break;
+                            window.pollEvent(event);
+                            if (event.key.code == sf::Keyboard::Left ||
+                                event.key.code == sf::Keyboard::Down ||
+                                event.key.code == sf::Keyboard::Right)
+                            {
+                                snakeMoves = event;
+                                break;
+                            }
+                            snakeObj.up();
+                            displaySnake();
                         }
-                        snakeObj.up();
-                        displaySnake();
+                        continue;
                     }
                         
                 }
                 //down
                 case sf::Keyboard::Down:
                 {
-                    direction = down;
-                    while (snakeMoves.key.code == sf::Keyboard::Down)
+                    if (direction != up)
                     {
-
-                        window.pollEvent(event);
-                        if (event.key.code == sf::Keyboard::Left ||
-                            event.key.code == sf::Keyboard::Right ||
-                            event.key.code == sf::Keyboard::Up)
+                        direction = down;
+                        while (snakeMoves.key.code == sf::Keyboard::Down)
                         {
-                            snakeMoves = event;
-                            break;
+
+                            window.pollEvent(event);
+                            if (event.key.code == sf::Keyboard::Left ||
+                                event.key.code == sf::Keyboard::Right ||
+                                event.key.code == sf::Keyboard::Up)
+                            {
+                                snakeMoves = event;
+                                break;
+                            }
+                            snakeObj.down();
+
+                            displaySnake();
+
                         }
-                        snakeObj.down();
-
-                        displaySnake();
-
+                        continue;
                     }
+                    
                 }
                 default:
                     break;
                 }
+
             }
+
+
         }
 
+        
     }
 };
 
@@ -481,8 +523,7 @@ public:
 
         window.create(sf::VideoMode(500, 400), "Snake");
         sf::Sprite startButton;
-        sf::Texture textureStartButton;
-
+        sf::Texture textureStartButton;    
 
         if (!textureStartButton.loadFromFile("start.png"))
         {
