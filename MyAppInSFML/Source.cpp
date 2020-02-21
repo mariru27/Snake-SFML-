@@ -5,7 +5,8 @@
 #include<stack>
 #include<vector>
 #include<deque>
-#include <stdlib.h>
+#include<stdlib.h>
+#include<string>
 #include<memory>
 
 
@@ -112,12 +113,14 @@ class Snake
 {
     int lastX;
     int lastY;
+    int score;
 public:
     sf::Texture textureForSnake;
     sf::Sprite spriteForSnake;
     std::deque<Position> snake;
     Snake()
     {
+        score = 0;
         if (!textureForSnake.loadFromFile("snake.png", sf::IntRect(0.5, 0.5, 20, 20)))
         {
             std::cout << "snake.png is not found";
@@ -188,15 +191,20 @@ public:
             break;
         }
     }
-    void  display()
+    void display()
     {
         std::cout << "fruit\n";
+    }
+    int getScore()
+    {
+        return score;
     }
 
     bool eatFruit(Fruit fruit, Direction direction)
     {
         if (snake[0].x == fruit.getX() && snake[0].y == fruit.getY())
         {
+            score += 10;
             snake.emplace_back(lastX, lastY);
             return true;
         }
@@ -221,9 +229,11 @@ protected:
 
     Snake snakeObj;
     Fruit fruit;
+    bool gOver;
 public:
     SnakeBoard()
     {
+        gOver = false;
         if (!texture.loadFromFile("ima.jpg"))
         {
             std::cout << "this img can not be load";
@@ -233,7 +243,7 @@ public:
             std::cout << "font can't load";
         }
         sprite.setTexture(texture);
-        direction = up;
+        direction = down;
     }
     bool startGame()
     {
@@ -322,24 +332,36 @@ public:
 
     void gameOver()
     {
+        std::string str = std::to_string(snakeObj.getScore());
 
-        if (!texture.loadFromFile("gameover.png" , sf::IntRect(0,0,200,200)))
+        if (!textureGameOver.loadFromFile("gameover.png"))
         {
             std::cout << "can not load gameover.png";
         }
         spriteGameOver.setTexture(textureGameOver);
+        text.setFont(arialFont);
+        text.setString(str);
+        text.setCharacterSize(50);
+        text.setPosition(200, 170);
+        while (window.isOpen())
+        {
+            window.clear();
+            window.draw(spriteGameOver);
+            window.draw(text);
+            window.display();
+        }
     }
 
-    void play()
+    bool play()
     {
         while (window.isOpen())
         {
             while (window.pollEvent(snakeMoves))
             {
-
+                std::cout << direction << std::endl;
                 switch (snakeMoves.key.code)
                 {
-                //right
+                    //right
                 case sf::Keyboard::Right:
                 {
                     if (direction != left)
@@ -356,11 +378,15 @@ public:
                                 snakeMoves = event;
                                 break;
                             }
-                            //snakeObj.right();
+
                             snakeObj.move(right);
                             displaySnake();
                         }
                         continue;
+                    }
+                    else
+                    {
+                        return false;
                     }
 
                 }
@@ -381,12 +407,14 @@ public:
                                 snakeMoves = event;
                                 break;
                             }
-                            /*snakeObj.left();*/
                             snakeObj.move(left);
-
                             displaySnake();
                         }
                         continue;
+                    }
+                    else
+                    {
+                        return false;
                     }
                 }
                 //up
@@ -405,13 +433,16 @@ public:
                                 snakeMoves = event;
                                 break;
                             }
-                            //snakeObj.up();
                             snakeObj.move(up);
                             displaySnake();
                         }
                         continue;
                     }
-                        
+                    else
+                    {
+                        return false;
+                    }
+
                 }
                 //down
                 case sf::Keyboard::Down:
@@ -430,25 +461,24 @@ public:
                                 snakeMoves = event;
                                 break;
                             }
-                            //snakeObj.down();
                             snakeObj.move(down);
                             displaySnake();
-
                         }
                         continue;
                     }
-                    
+                    else
+                    {
+                        return false;
+                    }
+
                 }
                 default:
                     break;
                 }
-
             }
-
-
         }
 
-        
+        return true;
     }
 };
 
@@ -461,7 +491,8 @@ protected:
     sf::Font arialFont;
     sf::Text text;
     std::deque<Position> snake;
-
+    sf::Texture textureGameOver;
+    sf::Sprite spriteGameOver;
 public:
     Test()
     {
@@ -474,63 +505,42 @@ public:
             std::cout << "font can't load";
         }
         sprite.setTexture(texture);
+
     }
     bool startGame()
     {
+                window.create(sf::VideoMode(500, 400), "Snake");
 
-        window.create(sf::VideoMode(500, 400), "Snake");
-        sf::Sprite startButton;
-        sf::Texture textureStartButton;    
 
-        if (!textureStartButton.loadFromFile("start.png"))
+        if (!texture.loadFromFile("gameover.png"))
         {
-            std::cout << "this img can not be load";
+            std::cout << "can not load gameover.png";
         }
+        spriteGameOver.setTexture(textureGameOver);
 
-        startButton.setTexture(textureStartButton);
-         
-        //snake.emplace_back(Position(10,10));
-        //snake.emplace_back(10, 10);
-        snake.emplace_front(10, 10);
+
+
+   
         while (window.isOpen())
         {
 
             window.clear();
             window.draw(sprite);
-            startButton.setPosition(140, 120);
-            window.draw(startButton);
-            window.draw(snake.front().sprite);
             window.display();
-            sf::Event event;
-
-            
-            
-
-            while (window.pollEvent(event))
-            {
-                if (event.type == sf::Event::MouseButtonPressed)
-                {
-                    if (event.mouseButton.button == sf::Mouse::Left)
-                    {
-                        std::cout << event.mouseButton.x << std::endl;
-                        std::cout << event.mouseButton.y << std::endl;
-                       
-                    }
-                }
-               
-            }
         }
         return false;
     }
 };
 
-
 int main()
 {
+
     SnakeBoard s;
     if (s.startGame() == true)
     {
-        s.play();
+        if (s.play() == false)
+            s.gameOver();
+        
     }
     
     //Test test;
